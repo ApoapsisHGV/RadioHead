@@ -4,6 +4,7 @@
 // $Id: RH_RF69.cpp,v 1.26 2015/12/11 01:10:24 mikem Exp $
 
 #include <RH_RF69.h>
+#include "Arduino.h"
 
 // Interrupt vectors for the 3 Arduino interrupt pins
 // Each interrupt can be handled by a different instance of RH_RF69, allowing you to have
@@ -104,8 +105,10 @@ bool RH_RF69::init()
 
     // Determine the interrupt number that corresponds to the interruptPin
     int interruptNumber = digitalPinToInterrupt(_interruptPin);
-    if (interruptNumber == NOT_AN_INTERRUPT)
-	return false;
+    if (interruptNumber == NOT_AN_INTERRUPT){
+		Serial.println("Pin is not an interrupt");
+		return false;
+	}
 #ifdef RH_ATTACHINTERRUPT_TAKES_PIN_NUMBER
     interruptNumber = _interruptPin;
 #endif
@@ -114,9 +117,10 @@ bool RH_RF69::init()
     // This also tests whether we are really connected to a device
     // My test devices return 0x24
     _deviceType = spiRead(RH_RF69_REG_10_VERSION);
-    if (_deviceType == 00 ||
-	_deviceType == 0xff)
-	return false;
+	if (_deviceType == 00 || _deviceType == 0xff) {
+		Serial.println("No device type, is a device connected?");
+		return false;
+	}
 
     // Add by Adrien van den Bossche <vandenbo@univ-tlse2.fr> for Teensy
     // ARM M4 requires the below. else pin interrupt doesn't work properly.
@@ -144,9 +148,10 @@ bool RH_RF69::init()
 	attachInterrupt(interruptNumber, isr1, RISING);
     else if (_myInterruptIndex == 2)
 	attachInterrupt(interruptNumber, isr2, RISING);
-    else
-	return false; // Too many devices, not enough interrupt vectors
-
+	else {
+		Serial.println("Too many devices, not enough interrupt vectors");
+		return false; // Too many devices, not enough interrupt vectors
+	}
     setModeIdle();
 
     // Configure important RH_RF69 registers
